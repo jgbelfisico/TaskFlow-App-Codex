@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api/v1'
 
 async function request (path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
@@ -27,6 +27,10 @@ export function register (payload) {
 
 export function login (payload) {
   return request('/auth/login', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export function getProfile (token) {
+  return request('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
 }
 
 export function getTasks (token) {

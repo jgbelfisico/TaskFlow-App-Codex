@@ -14,12 +14,12 @@ app.use(cors({ origin: env.frontendUrl }))
 app.use(morgan('dev'))
 app.use(express.json())
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/v1/health', (_req, res) => {
   res.status(200).json({ status: 'ok' })
 })
 
-app.use('/api/auth', authRouter)
-app.use('/api/tasks', taskRouter)
+app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/tasks', taskRouter)
 
 app.use(errorHandler)
 

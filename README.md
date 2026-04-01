@@ -11,6 +11,12 @@ Aplicación web full-stack para gestión de tareas con autenticación de usuario
 - **Auth:** JWT + bcrypt
 - **Testing:** Jest/Supertest (backend) + Vitest/Testing Library (frontend)
 
+## Estado actual
+
+✅ **Fase 1 implementada**: base funcional con autenticación, API versionada (`/api/v1`), modelo de datos inicial, shell frontend y tests básicos.
+
+Para el detalle completo de arquitectura y roadmap por fases revisa `docs/ARCHITECTURE.md`.
+
 ## Estructura del proyecto
 
 ```bash
@@ -22,6 +28,8 @@ Aplicación web full-stack para gestión de tareas con autenticación de usuario
 ├── frontend
 │   ├── src
 │   └── tests
+├── docs
+│   └── ARCHITECTURE.md
 ├── docker-compose.yml
 └── package.json
 ```
@@ -67,19 +75,23 @@ Aplicación web full-stack para gestión de tareas con autenticación de usuario
    ```
 
 - Frontend: http://localhost:5173
-- API: http://localhost:4000/api
+- API: http://localhost:4000/api/v1
 
 ## Endpoints principales
 
 ### Auth
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
 
 ### Tasks (requieren bearer token)
-- `GET /api/tasks`
-- `POST /api/tasks`
-- `PATCH /api/tasks/:id`
-- `DELETE /api/tasks/:id`
+- `GET /api/v1/tasks`
+- `POST /api/v1/tasks`
+- `PATCH /api/v1/tasks/:id`
+- `DELETE /api/v1/tasks/:id`
+
+### Infra
+- `GET /api/v1/health`
 
 ## Scripts útiles
 
@@ -96,14 +108,3 @@ Aplicación web full-stack para gestión de tareas con autenticación de usuario
 ### Frontend
 - `npm run dev --workspace frontend`
 - `npm run test --workspace frontend`
-
-## Tests básicos incluidos
-
-- Healthcheck y validación de payload en API.
-- Render básico del frontend.
-
-## Próximos pasos recomendados
-
-- Añadir refresh tokens y recuperación de contraseña.
-- Agregar validación de ownership más granular en logs y auditoría.
-- Integrar CI (lint + tests + build).

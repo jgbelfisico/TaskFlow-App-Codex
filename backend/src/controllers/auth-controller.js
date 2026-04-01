@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { loginUser, registerUser } from '../services/auth-service.js'
+import { getUserProfile, loginUser, registerUser } from '../services/auth-service.js'
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -36,4 +36,14 @@ export async function login (req, res) {
   }
 
   return res.status(200).json(result)
+}
+
+export async function me (req, res) {
+  const user = await getUserProfile(req.userId)
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' })
+  }
+
+  return res.status(200).json(user)
 }

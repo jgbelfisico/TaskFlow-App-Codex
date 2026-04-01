@@ -41,3 +41,15 @@ export async function loginUser ({ email, password }) {
     user: { id: user.id, email: user.email }
   }
 }
+
+export function getUserProfile (userId) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  })
+}
