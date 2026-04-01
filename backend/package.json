@@ -11,7 +11,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.js",
     "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build": "prisma generate",
+    "start:prod": "NODE_ENV=production node src/server.js",
+    "prisma:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

@@ -11,8 +11,9 @@ import { taskRouter } from './routes/task-routes.js'
 const app = express()
 
 app.disable('x-powered-by')
+app.set('trust proxy', 1)
 app.use(helmet())
-app.use(cors({ origin: env.frontendUrl }))
+app.use(cors({ origin: env.corsOrigins }))
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'))
 app.use(express.json({ limit: '20kb' }))
 app.use(basicRateLimit)

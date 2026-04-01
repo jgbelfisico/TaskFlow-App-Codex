@@ -3,181 +3,116 @@
 Aplicación web full-stack para gestión de tareas con autenticación de usuarios.
 
 ## Stack
+- Frontend: React + Vite
+- Backend: Node.js + Express + Prisma
+- DB: PostgreSQL
 
-- **Frontend:** React + Vite
-- **Backend:** Node.js + Express
-- **DB:** PostgreSQL
-- **ORM:** Prisma
-- **Auth:** JWT + bcrypt
-- **Testing:** Jest/Supertest (backend) + Vitest/Testing Library (frontend)
+## Scripts de build
 
-## Estado actual
+### Root
+```bash
+npm run build
+npm run build:backend
+npm run build:frontend
+npm run deploy:check
+```
 
-✅ Base funcional con autenticación y CRUD de tareas conectados entre frontend y backend.
+### Backend
+```bash
+npm run build --workspace backend
+npm run start:prod --workspace backend
+npm run prisma:migrate:deploy --workspace backend
+```
 
----
-
-## Requisitos
-
-- Node.js 20+
-- npm 10+
-- Docker + Docker Compose
+### Frontend
+```bash
+npm run build --workspace frontend
+npm run build:prod --workspace frontend
+```
 
 ## Variables de entorno
 
-1. Backend:
-   ```bash
-   cp backend/.env.example backend/.env
-   ```
-2. Frontend:
-   ```bash
-   cp frontend/.env.example frontend/.env
-   ```
+### Backend (`backend/.env.example`)
+- `NODE_ENV`: `development|test|production`
+- `PORT`: puerto del API
+- `DATABASE_URL`: conexión de PostgreSQL para Prisma
+- `JWT_SECRET`: secreto JWT (mínimo 12 chars)
+- `FRONTEND_URL`: URL pública del frontend
+- `CORS_ORIGINS`: lista separada por comas de orígenes permitidos
 
----
+Archivo de ejemplo producción: `backend/.env.production.example`.
 
-## Pasos exactos para correr la app (local)
+### Frontend (`frontend/.env.example`)
+- `VITE_API_URL`: URL base del API (ej: `https://api.taskflow.example.com/api/v1`)
 
-### 1) Instalar dependencias
+Archivo de ejemplo producción: `frontend/.env.production.example`.
+
+## Configuración para despliegue del frontend
+
+Se incluye `frontend/Dockerfile` multi-stage y `frontend/nginx.conf`:
+- build con Vite en stage Node
+- serving estático con Nginx
+- fallback SPA (`try_files ... /index.html`)
+
+Build manual:
 ```bash
-npm install
+docker build -f frontend/Dockerfile -t taskflow-frontend .
 ```
 
-### 2) Levantar PostgreSQL
+## Configuración del backend para producción
+
+Se incluye `backend/Dockerfile`:
+- instalación de dependencias
+- `prisma generate` durante build
+- arranque con `npm run start:prod`
+
+El backend ya incorpora:
+- `helmet`
+- rate limit básico
+- `trust proxy`
+- CORS configurable por `CORS_ORIGINS`
+- validación de entorno y payloads
+
+Build manual:
+```bash
+docker build -f backend/Dockerfile -t taskflow-backend .
+```
+
+## Instrucciones de base de datos (PostgreSQL + Prisma)
+
+### Desarrollo
 ```bash
 docker compose up -d
-```
-
-### 3) Generar cliente Prisma
-```bash
 npm run prisma:generate --workspace backend
-```
-
-### 4) Crear/aplicar migración
-```bash
 npm run prisma:migrate --workspace backend -- --name init
-```
-
-### 5) (Opcional) Seed demo
-```bash
 npm run prisma:seed --workspace backend
 ```
 
-### 6) Ejecutar backend + frontend
+### Producción
+1. Crear DB y credenciales seguras.
+2. Configurar `DATABASE_URL` real en backend.
+3. Ejecutar migraciones:
+   ```bash
+   npm run prisma:migrate:deploy --workspace backend
+   ```
+4. (Opcional) seed controlado solo si aplica.
+
+## Despliegue con Docker Compose (producción)
+
+Se incluye `docker-compose.prod.yml` con `frontend`, `backend` y `postgres`.
+
 ```bash
-npm run dev
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-URLs esperadas:
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:4000/api/v1
+## Checklist final de despliegue
 
----
-
-
-## Endurecimiento aplicado
-
-- Validaciones estrictas en auth y tareas (longitud, formato, contraseñas robustas, UUID en rutas).
-- Sanitización básica de texto (`trim` + remoción de caracteres de control).
-- Manejo de errores uniforme con `AppError` y middleware central.
-- Protección adicional: rate limit básico en API y `x-powered-by` deshabilitado.
-- Mejora de rendimiento inicial en listados de tareas con paginación (`limit`, `offset`) y `select` de campos.
-
----
-
-## Verificación end-to-end (manual)
-
-> Puedes validar desde UI o por `curl` para aislar backend.
-
-### 1) Registro
-```bash
-curl -X POST http://localhost:4000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"demo@taskflow.dev","password":"Password123"}'
-```
-
-### 2) Login
-```bash
-curl -X POST http://localhost:4000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"demo@taskflow.dev","password":"Password123"}'
-```
-Guarda el `token` de la respuesta.
-
-### 3) Crear tarea
-```bash
-curl -X POST http://localhost:4000/api/v1/tasks \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Primera tarea","description":"Prueba E2E"}'
-```
-
-### 4) Listar tareas
-```bash
-curl http://localhost:4000/api/v1/tasks \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-### 5) Editar tarea
-```bash
-curl -X PATCH http://localhost:4000/api/v1/tasks/<TASK_ID> \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Tarea editada"}'
-```
-
-### 6) Completar tarea
-```bash
-curl -X PATCH http://localhost:4000/api/v1/tasks/<TASK_ID> \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"completed":true}'
-```
-
-### 7) Borrar tarea
-```bash
-curl -X DELETE http://localhost:4000/api/v1/tasks/<TASK_ID> \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
----
-
-## Scripts útiles
-
-### Root
-- `npm run dev`
-- `npm run test`
-- `npm run build`
-
-### Backend
-- `npm run dev --workspace backend`
-- `npm run prisma:migrate --workspace backend`
-- `npm run test --workspace backend`
-
-### Frontend
-- `npm run dev --workspace frontend`
-- `npm run test --workspace frontend`
-
----
-
-## Pendientes y mejoras futuras
-
-1. **Auth y seguridad**
-   - Refresh tokens + rotación.
-   - Logout server-side.
-   - Rate limiting y protección anti brute-force.
-
-2. **UX/UI**
-   - Filtros por estado (todas/pendientes/completadas).
-   - Búsqueda por texto.
-   - Confirmación modal al eliminar.
-
-3. **Calidad y observabilidad**
-   - Cobertura de tests E2E reales (Playwright/Cypress).
-   - CI/CD con lint + test + build.
-   - Logging estructurado y métricas.
-
-4. **Producto**
-   - Fechas límite y prioridades.
-   - Etiquetas/categorías.
-   - Colaboración multiusuario.
+- [ ] Variables de entorno reales (sin secretos de ejemplo).
+- [ ] `JWT_SECRET` robusto y rotado.
+- [ ] `CORS_ORIGINS` restringido a dominios reales.
+- [ ] Migraciones Prisma aplicadas con `prisma migrate deploy`.
+- [ ] Healthcheck API OK (`/api/v1/health`).
+- [ ] Frontend sirviendo build estático y hablando con API correcta.
+- [ ] Logs y monitoreo habilitados.
+- [ ] Backups de PostgreSQL configurados.
+- [ ] CI con `lint + test + build` antes de deploy.
