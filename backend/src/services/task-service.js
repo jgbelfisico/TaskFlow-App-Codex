@@ -1,9 +1,21 @@
 import { prisma } from '../config/prisma.js'
 
-export function listTasks (userId) {
+const taskSelect = {
+  id: true,
+  title: true,
+  description: true,
+  completed: true,
+  createdAt: true,
+  updatedAt: true
+}
+
+export function listTasks (userId, { limit, offset }) {
   return prisma.task.findMany({
     where: { userId },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    skip: offset,
+    select: taskSelect
   })
 }
 
@@ -12,12 +24,13 @@ export function createTask (userId, data) {
     data: {
       ...data,
       userId
-    }
+    },
+    select: taskSelect
   })
 }
 
 export async function updateTask (userId, taskId, data) {
-  const task = await prisma.task.findFirst({ where: { id: taskId, userId } })
+  const task = await prisma.task.findFirst({ where: { id: taskId, userId }, select: { id: true } })
 
   if (!task) {
     return null
@@ -25,12 +38,13 @@ export async function updateTask (userId, taskId, data) {
 
   return prisma.task.update({
     where: { id: taskId },
-    data
+    data,
+    select: taskSelect
   })
 }
 
 export async function deleteTask (userId, taskId) {
-  const task = await prisma.task.findFirst({ where: { id: taskId, userId } })
+  const task = await prisma.task.findFirst({ where: { id: taskId, userId }, select: { id: true } })
 
   if (!task) {
     return false

@@ -1,20 +1,25 @@
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
+import { AppError } from '../utils/app-error.js'
 
-export function requireAuth (req, res, next) {
+export function requireAuth (req, _res, next) {
   const authHeader = req.headers.authorization
 
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Authentication required' })
+    return next(new AppError('Authentication required', 401))
   }
 
-  const token = authHeader.split(' ')[1]
+  const token = authHeader.slice(7).trim()
+
+  if (!token) {
+    return next(new AppError('Authentication required', 401))
+  }
 
   try {
     const payload = jwt.verify(token, env.jwtSecret)
     req.userId = payload.userId
-    next()
+    return next()
   } catch {
-    return res.status(401).json({ message: 'Invalid token' })
+    return next(new AppError('Invalid token', 401))
   }
 }

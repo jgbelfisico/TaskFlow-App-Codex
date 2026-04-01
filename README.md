@@ -74,6 +74,17 @@ URLs esperadas:
 
 ---
 
+
+## Endurecimiento aplicado
+
+- Validaciones estrictas en auth y tareas (longitud, formato, contraseñas robustas, UUID en rutas).
+- Sanitización básica de texto (`trim` + remoción de caracteres de control).
+- Manejo de errores uniforme con `AppError` y middleware central.
+- Protección adicional: rate limit básico en API y `x-powered-by` deshabilitado.
+- Mejora de rendimiento inicial en listados de tareas con paginación (`limit`, `offset`) y `select` de campos.
+
+---
+
 ## Verificación end-to-end (manual)
 
 > Puedes validar desde UI o por `curl` para aislar backend.
@@ -82,14 +93,14 @@ URLs esperadas:
 ```bash
 curl -X POST http://localhost:4000/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo@taskflow.dev","password":"password123"}'
+  -d '{"email":"demo@taskflow.dev","password":"Password123"}'
 ```
 
 ### 2) Login
 ```bash
 curl -X POST http://localhost:4000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo@taskflow.dev","password":"password123"}'
+  -d '{"email":"demo@taskflow.dev","password":"Password123"}'
 ```
 Guarda el `token` de la respuesta.
 

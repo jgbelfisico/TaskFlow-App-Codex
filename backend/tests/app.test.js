@@ -30,7 +30,10 @@ const prismaMock = {
     })
   },
   task: {
-    findMany: jest.fn(async ({ where }) => tasks.filter((task) => task.userId === where.userId)),
+    findMany: jest.fn(async ({ where, take, skip }) => {
+      const filtered = tasks.filter((task) => task.userId === where.userId)
+      return filtered.slice(skip, skip + take)
+    }),
     create: jest.fn(async ({ data }) => {
       const task = {
         id: randomUUID(),
@@ -63,7 +66,7 @@ jest.unstable_mockModule('../src/config/prisma.js', () => ({ prisma: prismaMock 
 
 const { app } = await import('../src/app.js')
 
-describe('TaskFlow API phase 1', () => {
+describe('TaskFlow API hardening', () => {
   beforeEach(() => {
     users.splice(0, users.length)
     tasks.splice(0, tasks.length)
@@ -79,14 +82,14 @@ describe('TaskFlow API phase 1', () => {
   it('register/login and task CRUD flow', async () => {
     const registerResponse = await request(app)
       .post('/api/v1/auth/register')
-      .send({ email: 'test@taskflow.dev', password: 'password123' })
+      .send({ email: 'Test@Taskflow.dev ', password: 'Password123' })
 
     expect(registerResponse.statusCode).toBe(201)
     expect(registerResponse.body.token).toBeDefined()
 
     const loginResponse = await request(app)
       .post('/api/v1/auth/login')
-      .send({ email: 'test@taskflow.dev', password: 'password123' })
+      .send({ email: 'test@taskflow.dev', password: 'Password123' })
 
     expect(loginResponse.statusCode).toBe(200)
     const token = loginResponse.body.token
@@ -94,13 +97,13 @@ describe('TaskFlow API phase 1', () => {
     const createTaskResponse = await request(app)
       .post('/api/v1/tasks')
       .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Create first task' })
+      .send({ title: 'Create first task', description: 'Description\nwith line break' })
 
     expect(createTaskResponse.statusCode).toBe(201)
     expect(createTaskResponse.body.title).toBe('Create first task')
 
     const listTaskResponse = await request(app)
-      .get('/api/v1/tasks')
+      .get('/api/v1/tasks?limit=5&offset=0')
       .set('Authorization', `Bearer ${token}`)
 
     expect(listTaskResponse.statusCode).toBe(200)
@@ -123,12 +126,25 @@ describe('TaskFlow API phase 1', () => {
     expect(deleteTaskResponse.statusCode).toBe(204)
   })
 
-  it('validates payloads and auth guards', async () => {
-    const invalidLogin = await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'bad-email', password: '123' })
+  it('rejects weak password, bad task id and unauthenticated access', async () => {
+    const invalidPassword = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ email: 'bad@taskflow.dev', password: 'weakpass' })
 
-    expect(invalidLogin.statusCode).toBe(400)
+    expect(invalidPassword.statusCode).toBe(400)
+
+    const registerResponse = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ email: 'secure@taskflow.dev', password: 'Password123' })
+
+    const token = registerResponse.body.token
+
+    const invalidTaskId = await request(app)
+      .patch('/api/v1/tasks/not-a-uuid')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ completed: true })
+
+    expect(invalidTaskId.statusCode).toBe(400)
 
     const protectedEndpoint = await request(app).get('/api/v1/tasks')
     expect(protectedEndpoint.statusCode).toBe(401)
