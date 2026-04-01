@@ -6,4 +6,9 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByText('TaskFlow')).toBeInTheDocument()
   })
+
+  it('renders login form when no token exists', () => {
+    render(<App />)
+    expect(screen.getByText('Iniciar sesión')).toBeInTheDocument()
+  })
 })

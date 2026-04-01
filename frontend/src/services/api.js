@@ -52,3 +52,10 @@ export function updateTask (token, taskId, payload) {
     body: JSON.stringify(payload)
   })
 }
+
+export function deleteTask (token, taskId) {
+  return request(`/tasks/${taskId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  })
+}
