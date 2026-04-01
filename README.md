@@ -13,85 +13,123 @@ Aplicación web full-stack para gestión de tareas con autenticación de usuario
 
 ## Estado actual
 
-✅ **Fase 1 implementada**: base funcional con autenticación, API versionada (`/api/v1`), modelo de datos inicial, shell frontend y tests básicos.
+✅ Base funcional con autenticación y CRUD de tareas conectados entre frontend y backend.
 
-Para el detalle completo de arquitectura y roadmap por fases revisa `docs/ARCHITECTURE.md`.
-
-## Estructura del proyecto
-
-```bash
-.
-├── backend
-│   ├── prisma
-│   ├── src
-│   └── tests
-├── frontend
-│   ├── src
-│   └── tests
-├── docs
-│   └── ARCHITECTURE.md
-├── docker-compose.yml
-└── package.json
-```
+---
 
 ## Requisitos
 
 - Node.js 20+
 - npm 10+
-- Docker (opcional, recomendado para PostgreSQL)
+- Docker + Docker Compose
 
-## Primeros pasos
+## Variables de entorno
 
-1. Instalar dependencias:
-   ```bash
-   npm install
-   ```
-
-2. Levantar PostgreSQL:
-   ```bash
-   docker compose up -d
-   ```
-
-3. Configurar variables de entorno:
+1. Backend:
    ```bash
    cp backend/.env.example backend/.env
+   ```
+2. Frontend:
+   ```bash
    cp frontend/.env.example frontend/.env
    ```
 
-4. Generar cliente Prisma y aplicar migración:
-   ```bash
-   npm run prisma:generate --workspace backend
-   npm run prisma:migrate --workspace backend -- --name init
-   ```
+---
 
-5. (Opcional) Cargar datos demo:
-   ```bash
-   npm run prisma:seed --workspace backend
-   ```
+## Pasos exactos para correr la app (local)
 
-6. Ejecutar entorno local completo:
-   ```bash
-   npm run dev
-   ```
+### 1) Instalar dependencias
+```bash
+npm install
+```
 
+### 2) Levantar PostgreSQL
+```bash
+docker compose up -d
+```
+
+### 3) Generar cliente Prisma
+```bash
+npm run prisma:generate --workspace backend
+```
+
+### 4) Crear/aplicar migración
+```bash
+npm run prisma:migrate --workspace backend -- --name init
+```
+
+### 5) (Opcional) Seed demo
+```bash
+npm run prisma:seed --workspace backend
+```
+
+### 6) Ejecutar backend + frontend
+```bash
+npm run dev
+```
+
+URLs esperadas:
 - Frontend: http://localhost:5173
-- API: http://localhost:4000/api/v1
+- Backend API: http://localhost:4000/api/v1
 
-## Endpoints principales
+---
 
-### Auth
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/me`
+## Verificación end-to-end (manual)
 
-### Tasks (requieren bearer token)
-- `GET /api/v1/tasks`
-- `POST /api/v1/tasks`
-- `PATCH /api/v1/tasks/:id`
-- `DELETE /api/v1/tasks/:id`
+> Puedes validar desde UI o por `curl` para aislar backend.
 
-### Infra
-- `GET /api/v1/health`
+### 1) Registro
+```bash
+curl -X POST http://localhost:4000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"demo@taskflow.dev","password":"password123"}'
+```
+
+### 2) Login
+```bash
+curl -X POST http://localhost:4000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"demo@taskflow.dev","password":"password123"}'
+```
+Guarda el `token` de la respuesta.
+
+### 3) Crear tarea
+```bash
+curl -X POST http://localhost:4000/api/v1/tasks \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Primera tarea","description":"Prueba E2E"}'
+```
+
+### 4) Listar tareas
+```bash
+curl http://localhost:4000/api/v1/tasks \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+### 5) Editar tarea
+```bash
+curl -X PATCH http://localhost:4000/api/v1/tasks/<TASK_ID> \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Tarea editada"}'
+```
+
+### 6) Completar tarea
+```bash
+curl -X PATCH http://localhost:4000/api/v1/tasks/<TASK_ID> \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"completed":true}'
+```
+
+### 7) Borrar tarea
+```bash
+curl -X DELETE http://localhost:4000/api/v1/tasks/<TASK_ID> \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+---
 
 ## Scripts útiles
 
@@ -108,3 +146,27 @@ Para el detalle completo de arquitectura y roadmap por fases revisa `docs/ARCHIT
 ### Frontend
 - `npm run dev --workspace frontend`
 - `npm run test --workspace frontend`
+
+---
+
+## Pendientes y mejoras futuras
+
+1. **Auth y seguridad**
+   - Refresh tokens + rotación.
+   - Logout server-side.
+   - Rate limiting y protección anti brute-force.
+
+2. **UX/UI**
+   - Filtros por estado (todas/pendientes/completadas).
+   - Búsqueda por texto.
+   - Confirmación modal al eliminar.
+
+3. **Calidad y observabilidad**
+   - Cobertura de tests E2E reales (Playwright/Cypress).
+   - CI/CD con lint + test + build.
+   - Logging estructurado y métricas.
+
+4. **Producto**
+   - Fechas límite y prioridades.
+   - Etiquetas/categorías.
+   - Colaboración multiusuario.
